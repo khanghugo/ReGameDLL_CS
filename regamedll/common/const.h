@@ -32,6 +32,7 @@
 #pragma once
 #endif
 
+#define MAP_SIZE					131072 // positive and negative
 // Max # of clients allowed in a server.
 #define MAX_CLIENTS                 32
 

@@ -856,11 +856,11 @@ void CBaseEntity::MakeDormant()
 BOOL CBaseEntity::IsInWorld()
 {
 	// position
-	if (pev->origin.x >= 4096.0 || pev->origin.y >= 4096.0 || pev->origin.z >= 4096.0)
+	if (pev->origin.x >= MAP_SIZE || pev->origin.y >= MAP_SIZE || pev->origin.z >= MAP_SIZE)
 	{
 		return FALSE;
 	}
-	if (pev->origin.x <= -4096.0 || pev->origin.y <= -4096.0 || pev->origin.z <= -4096.0)
+	if (pev->origin.x <= -MAP_SIZE || pev->origin.y <= -MAP_SIZE || pev->origin.z <= -MAP_SIZE)
 	{
 		return FALSE;
 	}
