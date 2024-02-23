@@ -173,6 +173,7 @@ cvar_t legacy_vehicle_block               = { "mp_legacy_vehicle_block", "1", 0,
 cvar_t dying_time              = { "mp_dying_time", "3.0", 0, 3.0f, nullptr };
 
 cvar_t fix_sticky_slide					  = { "sv_fix_sticky_slide", "0", 0, 0.0f, nullptr };
+cvar_t landmark_teleport					= { "sv_landmark_teleport", "0", 0, 0.0f, nullptr };
 
 
 void GameDLL_Version_f()
@@ -426,6 +427,7 @@ void EXT_FUNC GameDLLInit()
 	CVAR_REGISTER(&dying_time);
 
 	CVAR_REGISTER(&fix_sticky_slide);
+	CVAR_REGISTER(&landmark_teleport);
 
 	// print version
 	CONSOLE_ECHO("ReGameDLL version: " APP_VERSION "\n");

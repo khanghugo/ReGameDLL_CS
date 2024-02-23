@@ -1760,8 +1760,26 @@ void CBaseTrigger::TeleportTouch(CBaseEntity *pOther)
 
 	if (pOther->IsPlayer())
 	{
+#ifdef REGAMEDLL_ADD
+		if (m_iszLandmarkName) {
+			edict_t	*pentLandmark = nullptr;
+
+			pentLandmark = FIND_ENTITY_BY_TARGETNAME(pentLandmark, STRING(m_iszLandmarkName));
+			if (!FNullEnt(pentLandmark)) {
+				Vector diff = pevToucher->origin - VARS(pentLandmark)->origin;
+				tmp += diff;
+				tmp.z--; // offset 1 right here because of the next one
+			} else {
+				// fallback, shouldn't happen but anyway.
+				tmp.z -= pOther->pev->mins.z;
+			}
+		}
+		else
+#endif
 		// make origin adjustments in case the teleportee is a player. (origin in center, not at feet)
-		tmp.z -= pOther->pev->mins.z;
+		{
+			tmp.z -= pOther->pev->mins.z;
+		}
 	}
 
 	tmp.z++;
@@ -1813,6 +1831,27 @@ void CTriggerTeleport::Spawn()
 	InitTrigger();
 	SetTouch(&CTriggerTeleport::TeleportTouch);
 }
+
+#ifdef REGAMEDLL_ADD
+void CTriggerTeleport::KeyValue(KeyValueData *pkvd)
+{
+	if (FStrEq(pkvd->szKeyName, "landmark"))
+	{
+		if (Q_strlen(pkvd->szValue) > 0)
+		{
+			m_iszLandmarkName = ALLOC_STRING(pkvd->szValue);
+		}
+		// if it is empty, handled it in the teleport touch instead
+		// i am not sure how this works.
+		pkvd->fHandled = TRUE;
+	}
+	else
+	{
+		CBaseTrigger::KeyValue(pkvd);
+	}
+}
+
+#endif
 
 LINK_ENTITY_TO_CLASS(info_teleport_destination, CPointEntity, CCSPointEntity)
 LINK_ENTITY_TO_CLASS(func_buyzone, CBuyZone, CCSBuyZone)
