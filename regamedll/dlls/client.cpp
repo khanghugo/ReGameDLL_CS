@@ -4965,6 +4965,11 @@ void EXT_FUNC CmdStart(const edict_t *pEdict, const struct usercmd_s *cmd, unsig
 	entvars_t *pev = const_cast<entvars_t *>(&pEdict->v);
 	CBasePlayer *pPlayer = CBasePlayer::Instance(pev);
 
+#ifdef REGAMEDLL_ADD
+	pPlayer->cmdStartOrigin = Vector(pev->origin);
+	pPlayer->cmdStartVelocity = Vector(pev->velocity);
+#endif
+
 	if (!pPlayer)
 		return;
 
@@ -4978,6 +4983,21 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 {
 	entvars_t *pev = const_cast<entvars_t *>(&pEdict->v);
 	CBasePlayer *pPlayer = CBasePlayer::Instance(pev);
+
+#ifdef REGAMEDLL_ADD
+	if (fix_sticky_slide.value > 0.0) {
+		Vector end_origin = Vector(pev->origin);
+		Vector end_velocity = Vector(pev->velocity);
+
+		if (end_velocity.Length2D() == 0.0f // stuck, exclude z vel because it will be -4.0
+			&& pPlayer->cmdStartVelocity.Length() != 0.0f // not standing still, can include z
+			&& pPlayer->cmdStartOrigin == end_origin // origin doesn't change when stuck
+			) {
+			pev->origin[2] += 0.01; // offset so player isn't "stuck"
+			pev->velocity = pPlayer->cmdStartVelocity;
+		}
+	}
+#endif
 
 	if (!pPlayer)
 		return;
