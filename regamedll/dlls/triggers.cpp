@@ -1708,10 +1708,11 @@ void CTriggerPush::Touch(CBaseEntity *pOther)
 #ifdef REGAMEDLL_ADD
 		if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH) {
 			CBasePlayer *pPlayer = static_cast<CBasePlayer *>(pOther);
+			int index = ENTINDEX(pev);
 
 			// Limitation is that it would work nicely with only 1 trigger_push at a time.
-			pPlayer->triggerPushTouchCount += 1;
-			pPlayer->triggerPushVec = vecPush;
+			pPlayer->triggerPushOnEndInfo[index].count += 1;
+			pPlayer->triggerPushOnEndInfo[index].push = vecPush;
 			// Will not push the player
 			return;
 		}

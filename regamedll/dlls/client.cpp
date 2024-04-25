@@ -5025,22 +5025,31 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 #endif
 
 #ifdef REGAMEDLL_ADD
-	if ( pPlayer->triggerPushTouchCount != 0 ) {
-		if (pPlayer->triggerPushTouchCount != pPlayer->triggerPushTouchPrevCount) {
-			// Still inside the trigger because of increment.
-			pPlayer->triggerPushTouchPrevCount = pPlayer->triggerPushTouchCount;
+    for (auto it = pPlayer->triggerPushOnEndInfo.begin(); it != pPlayer->triggerPushOnEndInfo.end();)
+    {
+		if (it->second.count != 0) {
+			if (it->second.count != it->second.prev) {
+				// Still inside the trigger because of increment.
+				it->second.prev = it->second.count;
+				++it;
+			} else {
+				// Outside the trigger. Reset. Then remove
+				it->second.count = 0;
+
+				// Mimic CTriggerPush::Touch
+				if (pev->flags & FL_BASEVELOCITY)
+					it->second.push += pev->basevelocity;
+
+				pev->basevelocity = it->second.push;
+				pev->flags |= FL_BASEVELOCITY;
+
+				// Remove it from the map because we are done with the trigger.
+				it = pPlayer->triggerPushOnEndInfo.erase(it);
+			}
 		} else {
-			// Outside the trigger. Reset.
-			pPlayer->triggerPushTouchCount = 0;
-
-			// Mimic CTriggerPush::Touch
-			if (pev->flags & FL_BASEVELOCITY)
-				pPlayer->triggerPushVec += pev->basevelocity;
-
-			pev->basevelocity = pPlayer->triggerPushVec;
-			pev->flags |= FL_BASEVELOCITY;
+			++it;
 		}
-	}
+    }
 #endif
 
 	if (pPlayer->pev->groupinfo)

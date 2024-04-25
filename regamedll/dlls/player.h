@@ -33,6 +33,8 @@
 #include "hintmessage.h"
 #include "unisignals.h"
 
+#include <unordered_map>
+
 #define SOUND_FLASHLIGHT_ON  "items/flashlight1.wav"
 #define SOUND_FLASHLIGHT_OFF "items/flashlight1.wav"
 
@@ -338,6 +340,14 @@ public:
 	void Spawn(entvars_t *pevOwner);
 	void Spray();
 };
+
+#ifdef REGAMEDLL_ADD
+struct TriggerPushOnEndData {
+	int count;
+	int prev;
+	Vector push;
+};
+#endif
 
 class CBasePlayer: public CBaseMonster {
 public:
@@ -910,10 +920,8 @@ public:
 #endif
 
 #ifdef REGAMEDLL_ADD
-	// Use two counts to check for change.
-	int triggerPushTouchCount = 0;
-	int triggerPushTouchPrevCount = 0;
-	Vector triggerPushVec = Vector(0, 0, 0);
+	// (count, prev count), push vector
+	std::unordered_map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
 #endif	
 };
 
