@@ -922,6 +922,7 @@ public:
 #ifdef REGAMEDLL_ADD
 	// (count, prev count), push vector
 	std::map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
+	std::map<int, float> triggerPushMpWait;
 #endif	
 };
 

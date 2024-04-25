@@ -1631,7 +1631,17 @@ LINK_ENTITY_TO_CLASS(trigger_push, CTriggerPush, CCSTriggerPush)
 
 void CTriggerPush::KeyValue(KeyValueData *pkvd)
 {
+#ifdef REGAMEDLL_ADD
+	if (FStrEq(pkvd->szKeyName, "mp_wait"))
+	{
+		m_flMpWait = Q_atof(pkvd->szValue);
+		pkvd->fHandled = TRUE;
+	}
+	else
+#endif
+	{
 	CBaseTrigger::KeyValue(pkvd);
+	}
 }
 
 void CTriggerPush::Spawn()
@@ -1706,16 +1716,29 @@ void CTriggerPush::Touch(CBaseEntity *pOther)
 			Vector vecPush = (pev->speed * pev->movedir);
 
 #ifdef REGAMEDLL_ADD
-		if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH) {
 			CBasePlayer *pPlayer = static_cast<CBasePlayer *>(pOther);
 			int index = ENTINDEX(pev);
 
-			// Limitation is that it would work nicely with only 1 trigger_push at a time.
-			pPlayer->triggerPushOnEndInfo[index].count += 1;
-			pPlayer->triggerPushOnEndInfo[index].push = vecPush;
-			// Will not push the player
-			return;
-		}
+			if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_MULTIPLAYER_WAIT) {
+				// If not exists, start the count.
+				// This is to make sure initialization is correct.
+				// That also means that if timer runs out, we have to delete the element.
+				if (pPlayer->triggerPushMpWait.count(index) == 0 || pPlayer->triggerPushMpWait[index] >= gpGlobals->time) {
+					pPlayer->triggerPushMpWait.erase(index);
+					pPlayer->triggerPushMpWait[index] = gpGlobals->time + m_flMpWait;
+				} else {
+					// Don't do anything if there is wait.
+					return;
+				}
+			}
+
+			if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH) {
+				// Limitation is that it would work nicely with only 1 trigger_push at a time.
+				pPlayer->triggerPushOnEndInfo[index].count += 1;
+				pPlayer->triggerPushOnEndInfo[index].push = vecPush;
+				// Will not push the player
+				return;
+			}
 #endif
 
 			if (pevToucher->flags & FL_BASEVELOCITY)
