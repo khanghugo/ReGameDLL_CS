@@ -908,6 +908,13 @@ public:
 	Vector cmdStartOrigin;
 	Vector cmdStartVelocity;
 #endif
+
+#ifdef REGAMEDLL_ADD
+	// Use two counts to check for change.
+	int triggerPushTouchCount = 0;
+	int triggerPushTouchPrevCount = 0;
+	Vector triggerPushVec = Vector(0, 0, 0);
+#endif	
 };
 
 CWeaponBox *CreateWeaponBox(CBasePlayerItem *pItem, CBasePlayer *pPlayerOwner, const char *modelName, Vector &origin, Vector &angles, Vector &velocity, float lifeTime, bool packAmmo);

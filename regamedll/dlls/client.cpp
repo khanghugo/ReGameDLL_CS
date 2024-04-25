@@ -4984,6 +4984,9 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 	entvars_t *pev = const_cast<entvars_t *>(&pEdict->v);
 	CBasePlayer *pPlayer = CBasePlayer::Instance(pev);
 
+	if (!pPlayer)
+		return;
+
 #ifdef REGAMEDLL_ADD
 	if (fix_sticky_slide.value > 0.0) {
 		Vector end_origin = Vector(pev->origin);
@@ -5021,8 +5024,24 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 	}
 #endif
 
-	if (!pPlayer)
-		return;
+#ifdef REGAMEDLL_ADD
+	if ( pPlayer->triggerPushTouchCount != 0 ) {
+		if (pPlayer->triggerPushTouchCount != pPlayer->triggerPushTouchPrevCount) {
+			// Still inside the trigger because of increment.
+			pPlayer->triggerPushTouchPrevCount = pPlayer->triggerPushTouchCount;
+		} else {
+			// Outside the trigger. Reset.
+			pPlayer->triggerPushTouchCount = 0;
+
+			// Mimic CTriggerPush::Touch
+			if (pev->flags & FL_BASEVELOCITY)
+				pPlayer->triggerPushVec += pev->basevelocity;
+
+			pev->basevelocity = pPlayer->triggerPushVec;
+			pev->flags |= FL_BASEVELOCITY;
+		}
+	}
+#endif
 
 	if (pPlayer->pev->groupinfo)
 		UTIL_UnsetGroupTrace();

@@ -1669,6 +1669,9 @@ void CTriggerPush::Restart()
 }
 #endif
 
+#define SF_TRIGGER_PUSH_MULTIPLAYER_WAIT 512
+#define SF_TRIGGER_PUSH_ON_END_TOUCH 1024
+
 void CTriggerPush::Touch(CBaseEntity *pOther)
 {
 	entvars_t *pevToucher = pOther->pev;
@@ -1701,6 +1704,19 @@ void CTriggerPush::Touch(CBaseEntity *pOther)
 		{
 			// Push field, transfer to base velocity
 			Vector vecPush = (pev->speed * pev->movedir);
+
+#ifdef REGAMEDLL_ADD
+		if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH) {
+			CBasePlayer *pPlayer = static_cast<CBasePlayer *>(pOther);
+
+			// Limitation is that it would work nicely with only 1 trigger_push at a time.
+			pPlayer->triggerPushTouchCount += 1;
+			pPlayer->triggerPushVec = vecPush;
+			// Will not push the player
+			return;
+		}
+#endif
+
 			if (pevToucher->flags & FL_BASEVELOCITY)
 			{
 				vecPush = vecPush +  pevToucher->basevelocity;
