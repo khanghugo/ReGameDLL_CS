@@ -33,7 +33,7 @@
 #include "hintmessage.h"
 #include "unisignals.h"
 
-#include <unordered_map>
+#include <map>
 
 #define SOUND_FLASHLIGHT_ON  "items/flashlight1.wav"
 #define SOUND_FLASHLIGHT_OFF "items/flashlight1.wav"
@@ -921,7 +921,7 @@ public:
 
 #ifdef REGAMEDLL_ADD
 	// (count, prev count), push vector
-	std::unordered_map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
+	std::map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
 #endif	
 };
 
