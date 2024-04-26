@@ -347,6 +347,13 @@ void EXT_FUNC ClientDisconnect(edict_t *pEntity)
 	{
 		TheBots->ClientDisconnect(pPlayer);
 	}
+
+#ifdef REGAMEDLL_ADD
+	if (pPlayer) {
+		pPlayer->triggerPushOnEndInfo.clear();
+		pPlayer->triggerPushMpWait.clear();
+	}
+#endif
 }
 
 void respawn(entvars_t *pev, BOOL fCopyCorpse)
