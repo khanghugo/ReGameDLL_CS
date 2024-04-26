@@ -5046,6 +5046,9 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 
 		// Outside the trigger. Reset. Then remove
 		it->second.count = 0;
+		// Explicitly set to -1 so we have prev != count.
+		// Otherwise the previous condition would not fall through.
+		it->second.prev = -1;
 
 		bool should_push = true;
 
@@ -5056,13 +5059,17 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 		}
 
 		// If value is not fixed, then change the value.
-		if (!it->second.wait_fixed) {
-			it->second.wait_next = gpGlobals->time + it->second.wait_time;
-			it->second.wait_fixed = true;
-		} else {
-			// If value is fixed and timer exceeds then we can restart it next time.
-			if (it->second.wait_next < gpGlobals->time) {
-				it->second.wait_fixed = false;
+		if (it->second.wait_time != 0.f) {
+			if (!it->second.wait_fixed) {
+				it->second.wait_next = gpGlobals->time + it->second.wait_time;
+				it->second.wait_fixed = true;
+			} else {
+				// If value is fixed and timer exceeds then we can restart it next time.
+				if (it->second.wait_next < gpGlobals->time) {
+					it->second.wait_fixed = false;
+				} else {
+					should_push = false;
+				}
 			}
 		}
 
