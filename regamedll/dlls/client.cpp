@@ -5025,31 +5025,56 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 #endif
 
 #ifdef REGAMEDLL_ADD
-    for (auto it = pPlayer->triggerPushOnEndInfo.begin(); it != pPlayer->triggerPushOnEndInfo.end();)
+    for (auto it = pPlayer->triggerPushOnEndInfo.begin(); it != pPlayer->triggerPushOnEndInfo.end(); ++it)
     {
-		if (it->second.count != 0) {
-			if (it->second.count != it->second.prev) {
-				// Still inside the trigger because of increment.
-				it->second.prev = it->second.count;
-				++it;
-			} else {
-				// Outside the trigger. Reset. Then remove
-				it->second.count = 0;
+    	if (!it->second.inuse || it->second.count == 0) {
+    		continue;
+    	}
 
-				// Mimic CTriggerPush::Touch
+		if (it->second.count != it->second.prev) {
+			// Still inside the trigger because of increment.
+			it->second.prev = it->second.count;
+			continue;
+		}
+
+		// Outside the trigger. Reset. Then remove
+		it->second.count = 0;
+
+		bool should_push = true;
+
+		// For mp_wait
+		// Wait
+		if (it->second.wait_next >= gpGlobals->time) {
+			should_push = false;
+		}
+
+		// If value is not fixed, then change the value.
+		if (!it->second.wait_fixed) {
+			it->second.wait_next = gpGlobals->time + it->second.wait_time;
+			it->second.wait_fixed = true;
+		} else {
+			// If value is fixed and timer exceeds then we can restart it next time.
+			if (it->second.wait_next < gpGlobals->time) {
+				it->second.wait_fixed = false;
+			}
+		}
+
+		if (should_push) {
+			// Mimic CTriggerPush::Touch
+			if (it->second.velocity_add) {
+				pev->velocity += it->second.push;
+			} else {
 				if (pev->flags & FL_BASEVELOCITY)
 					it->second.push += pev->basevelocity;
 
 				pev->basevelocity = it->second.push;
 				pev->flags |= FL_BASEVELOCITY;
-
-				// Remove it from the map because we are done with the trigger.
-				it = pPlayer->triggerPushOnEndInfo.erase(it);
 			}
-		} else {
-			++it;
 		}
-    }
+
+		// lazily remove.
+		it->second.inuse = false;
+    } 
 #endif
 
 	if (pPlayer->pev->groupinfo)

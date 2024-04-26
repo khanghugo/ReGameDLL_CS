@@ -343,9 +343,14 @@ public:
 
 #ifdef REGAMEDLL_ADD
 struct TriggerPushOnEndData {
-	int count;
-	int prev;
+	bool inuse = false;
+	int count = 0;
+	int prev = -1;
 	Vector push;
+	bool wait_fixed = false;
+	float wait_time = 0.f;
+	float wait_next = 0.f;
+	bool velocity_add = false;
 };
 #endif
 
@@ -920,9 +925,9 @@ public:
 #endif
 
 #ifdef REGAMEDLL_ADD
-	// (count, prev count), push vector
 	std::map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
-	std::map<int, float> triggerPushMpWait;
+	// 						fixed time
+	std::map<int, std::pair<bool, float>> triggerPushMpWait;
 #endif	
 };
 
