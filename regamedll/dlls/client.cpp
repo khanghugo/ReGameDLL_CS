@@ -4999,8 +4999,8 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 			const auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
 			const auto hull_number = is_duck ? 3 : 1;
 
-			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, -2), ignore_monsters, hull_number, pEdict, &tr_down);
-			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, 2), ignore_monsters, hull_number, pEdict, &tr_up);
+			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, -2), ignore_monsters, hull_number, const_cast<edict_t *>(pEdict), &tr_down);
+			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, 2), ignore_monsters, hull_number, const_cast<edict_t *>(pEdict), &tr_up);
 
 			auto origin_z_offset = 0.01;
 
