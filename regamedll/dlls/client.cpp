@@ -4993,7 +4993,29 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 			&& pPlayer->cmdStartVelocity.Length() != 0.0f // not standing still, can include z
 			&& pPlayer->cmdStartOrigin == end_origin // origin doesn't change when stuck
 			) {
-			pev->origin[2] += 0.01; // offset so player isn't "stuck"
+			TraceResult tr_up;
+			TraceResult tr_down;
+
+			const auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+			const auto hull_number = is_duck ? 3 : 1;
+
+			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, -2), ignore_monsters, hull_number, pEdict, &tr_down);
+			UTIL_TraceHull(end_origin, end_origin + Vector(0, 0, 2), ignore_monsters, hull_number, pEdict, &tr_up);
+
+			auto origin_z_offset = 0.01;
+
+			// If trace to the bottom and no hit, then it means the slide is up top.
+			// Already have offset positive by default so there is no need for other case.
+			if (tr_down.flFraction == 1.0 && tr_up.flFraction != 1.0)
+				origin_z_offset = -origin_z_offset;
+			else if (tr_down.flFraction == 1.0 && tr_up.flFraction == 1.0) {
+				// It is not possible to just get stuck in air so this is edge case of being ramp sandwiched.
+				// Very rare and stupid case. No changes then so it is more predictable to maneuver.
+				origin_z_offset = 0;
+				pPlayer->cmdStartVelocity = Vector();
+			}
+
+			pev->origin[2] += origin_z_offset;
 			pev->velocity = pPlayer->cmdStartVelocity;
 		}
 	}
