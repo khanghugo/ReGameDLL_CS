@@ -347,6 +347,13 @@ void EXT_FUNC ClientDisconnect(edict_t *pEntity)
 	{
 		TheBots->ClientDisconnect(pPlayer);
 	}
+
+#ifdef REGAMEDLL_ADD
+	if (pPlayer) {
+		pPlayer->triggerPushOnEndInfo.clear();
+		pPlayer->triggerPushMpWait.clear();
+	}
+#endif
 }
 
 void respawn(entvars_t *pev, BOOL fCopyCorpse)
@@ -5055,6 +5062,66 @@ void EXT_FUNC CmdEnd(const edict_t *pEdict)
 
 	if (!pPlayer)
 		return;
+
+#ifdef REGAMEDLL_ADD
+    for (auto it = pPlayer->triggerPushOnEndInfo.begin(); it != pPlayer->triggerPushOnEndInfo.end(); ++it)
+    {
+    	if (!it->second.inuse || it->second.count == 0) {
+    		continue;
+    	}
+
+		if (it->second.count != it->second.prev) {
+			// Still inside the trigger because of increment.
+			it->second.prev = it->second.count;
+			continue;
+		}
+
+		// Outside the trigger. Reset. Then remove
+		it->second.count = 0;
+		// Explicitly set to -1 so we have prev != count.
+		// Otherwise the previous condition would not fall through.
+		it->second.prev = -1;
+
+		bool should_push = true;
+
+		// For mp_wait
+		// Wait
+		if (it->second.wait_next >= gpGlobals->time) {
+			should_push = false;
+		}
+
+		// If value is not fixed, then change the value.
+		if (it->second.wait_time != 0.f) {
+			if (!it->second.wait_fixed) {
+				it->second.wait_next = gpGlobals->time + it->second.wait_time;
+				it->second.wait_fixed = true;
+			} else {
+				// If value is fixed and timer exceeds then we can restart it next time.
+				if (it->second.wait_next < gpGlobals->time) {
+					it->second.wait_fixed = false;
+				} else {
+					should_push = false;
+				}
+			}
+		}
+
+		if (should_push) {
+			// Mimic CTriggerPush::Touch
+			if (it->second.velocity_add) {
+				pev->velocity += it->second.push;
+			} else {
+				if (pev->flags & FL_BASEVELOCITY)
+					it->second.push += pev->basevelocity;
+
+				pev->basevelocity = it->second.push;
+				pev->flags |= FL_BASEVELOCITY;
+			}
+		}
+
+		// lazily remove.
+		it->second.inuse = false;
+    } 
+#endif
 
 	if (pPlayer->pev->groupinfo)
 		UTIL_UnsetGroupTrace();

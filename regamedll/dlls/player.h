@@ -33,6 +33,8 @@
 #include "hintmessage.h"
 #include "unisignals.h"
 
+#include <map>
+
 #define SOUND_FLASHLIGHT_ON  "items/flashlight1.wav"
 #define SOUND_FLASHLIGHT_OFF "items/flashlight1.wav"
 
@@ -338,6 +340,19 @@ public:
 	void Spawn(entvars_t *pevOwner);
 	void Spray();
 };
+
+#ifdef REGAMEDLL_ADD
+struct TriggerPushOnEndData {
+	bool inuse = false;
+	int count = 0;
+	int prev = -1;
+	Vector push;
+	bool wait_fixed = false;
+	float wait_time = 0.f;
+	float wait_next = 0.f;
+	bool velocity_add = false;
+};
+#endif
 
 class CBasePlayer: public CBaseMonster {
 public:
@@ -915,6 +930,12 @@ public:
 	int m_iLastClientHealth;
 	float m_tmNextAccountHealthUpdate;
 #endif
+
+#ifdef REGAMEDLL_ADD
+	std::map<int, TriggerPushOnEndData> triggerPushOnEndInfo;
+	// 						fixed time
+	std::map<int, std::pair<bool, float>> triggerPushMpWait;
+#endif	
 };
 
 CWeaponBox *CreateWeaponBox(CBasePlayerItem *pItem, CBasePlayer *pPlayerOwner, const char *modelName, Vector &origin, Vector &angles, Vector &velocity, float lifeTime, bool packAmmo);
