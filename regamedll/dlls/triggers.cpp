@@ -1642,7 +1642,17 @@ LINK_ENTITY_TO_CLASS(trigger_push, CTriggerPush, CCSTriggerPush)
 
 void CTriggerPush::KeyValue(KeyValueData *pkvd)
 {
+#ifdef REGAMEDLL_ADD
+	if (FStrEq(pkvd->szKeyName, "mp_wait"))
+	{
+		m_flMpWait = Q_atof(pkvd->szValue);
+		pkvd->fHandled = TRUE;
+	}
+	else
+#endif
+	{
 	CBaseTrigger::KeyValue(pkvd);
+	}
 }
 
 void CTriggerPush::Spawn()
@@ -1680,6 +1690,9 @@ void CTriggerPush::Restart()
 }
 #endif
 
+#define SF_TRIGGER_PUSH_VELOCITY_ADD 512
+#define SF_TRIGGER_PUSH_ON_END_TOUCH 1024
+
 void CTriggerPush::Touch(CBaseEntity *pOther)
 {
 	entvars_t *pevToucher = pOther->pev;
@@ -1712,13 +1725,72 @@ void CTriggerPush::Touch(CBaseEntity *pOther)
 		{
 			// Push field, transfer to base velocity
 			Vector vecPush = (pev->speed * pev->movedir);
+
+#ifdef REGAMEDLL_ADD
+			CBasePlayer *pPlayer = static_cast<CBasePlayer *>(pOther);
+			int index = ENTINDEX(pev);
+
+			bool should_push = true;
+
+			if (pOther->IsPlayer() && pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH)
+			{
+				// Limitation is that it would work nicely with only 1 trigger_push at a time.
+				pPlayer->triggerPushOnEndInfo[index].inuse = true;
+				pPlayer->triggerPushOnEndInfo[index].count += 1;
+				pPlayer->triggerPushOnEndInfo[index].push = vecPush;
+				pPlayer->triggerPushOnEndInfo[index].wait_time = m_flMpWait;
+				pPlayer->triggerPushOnEndInfo[index].velocity_add = pev->spawnflags & SF_TRIGGER_PUSH_VELOCITY_ADD;
+
+				// Will not push the player
+				should_push = false;
+			}
+
+			// On end touch will use a different timer.
+			// The reason is that its timer would be started on end, not on touch.
+			// Otherwise, we wouldn't know which timer is being in-used.
+			if (pOther->IsPlayer() && m_flMpWait != 0.f && !(pev->spawnflags & SF_TRIGGER_PUSH_ON_END_TOUCH))
+			{
+				// Wait
+				if (pPlayer->triggerPushMpWait[index].second >= gpGlobals->time)
+				{
+					should_push = false;
+				}
+
+				// If value is not fixed, then change the value.
+				if (!pPlayer->triggerPushMpWait[index].first)
+				{
+					pPlayer->triggerPushMpWait[index].second = gpGlobals->time + m_flMpWait;
+					pPlayer->triggerPushMpWait[index].first = true;
+				} 
+				else
+				{
+					// If value is fixed and timer exceeds then we can restart it next time.
+					if (pPlayer->triggerPushMpWait[index].second < gpGlobals->time)
+					{
+						pPlayer->triggerPushMpWait[index].first = false;
+					}
+				}
+			}
+
+			if (!should_push)
+				return;
+#endif
 			if (pevToucher->flags & FL_BASEVELOCITY)
 			{
 				vecPush = vecPush +  pevToucher->basevelocity;
 			}
 
-			pevToucher->basevelocity = vecPush;
-			pevToucher->flags |= FL_BASEVELOCITY;
+#ifdef REGAMEDLL_ADD
+			if (pev->spawnflags & SF_TRIGGER_PUSH_VELOCITY_ADD)
+			{
+				pevToucher->velocity += vecPush;
+			}
+			else
+#endif
+			{
+				pevToucher->basevelocity = vecPush;
+				pevToucher->flags |= FL_BASEVELOCITY;
+			}
 		}
 	}
 }

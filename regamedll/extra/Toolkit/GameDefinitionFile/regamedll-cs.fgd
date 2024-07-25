@@ -2193,9 +2193,12 @@
 	[
 		1: "Once Only" : 0
 		2: "Start Off" : 0
+		512: "Add directly to player velocity" : 0
+		1024: "Trigger on leaving trigger" : 0
 	]
 // speed of ~1000 needed to go up.
 	speed(integer) : "Speed of push" : 40
+	mp_wait(string) : "Delay before reset for multiplayer" : "0.0"
 ]
 
 @BaseClass base(Targetname) = BaseRandom
