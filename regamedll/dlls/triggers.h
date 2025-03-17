@@ -396,6 +396,11 @@ public:
 #ifdef REGAMEDLL_FIXES
 	virtual void Restart();
 #endif
+
+#ifdef REGAMEDLL_ADD
+	// "wait" but in MP without AmxModX.
+	float m_flMpWait = 0.f;
+#endif
 };
 
 class CTriggerTeleport: public CBaseTrigger
